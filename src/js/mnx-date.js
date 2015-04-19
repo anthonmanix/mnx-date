@@ -2,7 +2,7 @@
   'use strict';
   var ns = 'mnx-date';
   
-  function renderCalendar(year, month, fow, sel, filter) {
+  function renderCalendar(year, month, fow, sel, min, max, filter) {
     var d = new Date(year, month, -fow), f, s, m = ['<tbody>'], wi, di;
     d = new Date(year, month, -d.getDay());
     s = filter('date')(sel, 'yyyy-MM-dd');
@@ -10,11 +10,15 @@
       m.push('<tr>');
       for (di = 0; di < 7; di += 1) {
         f = filter('date')(d, 'yyyy-MM-dd');
-        m.push(
-          '<td data-date="', f,
-          '" title="', filter('date')(d, 'fullDate'),
-          '" class="', ns, '-cal-day', d.getMonth() != month ? '-alt' : (f === s ? '-sel' : ''),
-          '">', d.getDate(), '</td>');
+        if (d >= min && d <= max) {
+          m.push(
+            '<td data-date="', f,
+            '" title="', filter('date')(d, 'fullDate'),
+            '" class="', ns, '-cal-day', d.getMonth() != month ? '-alt' : (f === s ? '-sel' : ''),
+            '">', d.getDate(), '</td>');
+        } else {
+          m.push('<td></td>');
+        }
         d.setDate(d.getDate() + 1);
       }
       m.push('</tr>');
@@ -29,7 +33,7 @@
       require: 'ngModel',
       link: function link(scope, element, attrs, ctrl) {
         var
-          refDate,
+          refDate, minDate, maxDate,
           dateFormats = $locale.DATETIME_FORMATS,
           // date settings
           format = attrs.mnxFormat || dateFormats.shortDate,
@@ -58,21 +62,30 @@
           calDays = angular.element('<tbody></tbody>');
 
         function inputUpdate(event) {
+          var dir;
           if (event) {
+            dir = +angular.element(event.srcElement).attr('data-dir');
             event.stopPropagation();
             event.preventDefault();
-            refDate.setMonth(refDate.getMonth() + +angular.element(event.srcElement).attr('data-dir'));
+            if (minDate && refDate.getMonth() + dir < minDate.getMonth() ||
+                maxDate && refDate.getMonth() + dir > maxDate.getMonth()) return;
+            refDate.setMonth(refDate.getMonth() + dir);
           }
           btnMode.text(dateFormats.MONTH[refDate.getMonth()] + ' ' + refDate.getFullYear());
-          calDays.html(renderCalendar(refDate.getFullYear(), refDate.getMonth(), firstDay, ctrl.$modelValue, $filter));
+          calDays.html(renderCalendar(refDate.getFullYear(), refDate.getMonth(), firstDay, ctrl.$modelValue, minDate, maxDate, $filter));
+          btnPrev.css({ opacity: minDate && refDate.getMonth() - 1 < minDate.getMonth() ? 0 : 1 });
+          btnNext.css({ opacity: maxDate && refDate.getMonth() + 1 > maxDate.getMonth() ? 0 : 1 });
         }
         
         function pickerUpdate(event) {
+            var clickDate = angular.element(event.srcElement).attr('data-date');
             event.stopPropagation();
             event.preventDefault();
-            refDate = new Date(angular.element(event.srcElement).attr('data-date'));
-            ctrl.$setViewValue($filter('date')(refDate, format));
-            ctrl.$render();
+            if (clickDate) {
+              refDate = new Date(clickDate);
+              ctrl.$setViewValue($filter('date')(refDate, format));
+              ctrl.$render();
+            }
           }
         
         ctrl.$parsers.push(function (value) {
@@ -101,16 +114,10 @@
           return angular.isDate(modelValue);
         };
         ctrl.$validators.min = function (modelValue) {
-          if (attrs.mnxMin) {
-            return scope.$eval(attrs.mnxMin) <= modelValue;
-          }
-          return true;
+          return !minDate || modelValue >= minDate;
         };
         ctrl.$validators.max = function (modelValue) {
-          if (attrs.mnxMax) {
-            return scope.$eval(attrs.mnxMax) >= modelValue;
-          }
-          return true;
+          return !maxDate || modelValue <= maxDate;
         };
         
         container
@@ -126,6 +133,11 @@
           btnNext.on('mousedown', inputUpdate);
           calDays.on('mousedown', pickerUpdate);
           refDate = (ctrl.$modelValue && new Date(ctrl.$modelValue)) || new Date();
+          refDate.setHours(0, 0, 0, 0);
+          minDate = scope.$eval(attrs.mnxMin);
+          minDate.setHours(0, 0, 0, 0);
+          maxDate = scope.$eval(attrs.mnxMax);
+          maxDate.setHours(0, 0, 0, 0);
           inputUpdate();
           element.on('blur', function blur() {
             element.off('blur', blur);
