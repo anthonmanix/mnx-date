@@ -29,7 +29,7 @@
       require: 'ngModel',
       link: function link(scope, element, attrs, ctrl) {
         var
-          refDate = (ctrl.$modelValue && new Date(ctrl.$modelValue)) || new Date(),
+          refDate,
           dateFormats = $locale.DATETIME_FORMATS,
           // date settings
           format = attrs.mnxFormat || dateFormats.shortDate,
@@ -125,6 +125,7 @@
           btnPrev.on('mousedown', inputUpdate);
           btnNext.on('mousedown', inputUpdate);
           calDays.on('mousedown', pickerUpdate);
+          refDate = (ctrl.$modelValue && new Date(ctrl.$modelValue)) || new Date();
           inputUpdate();
           element.on('blur', function blur() {
             element.off('blur', blur);
