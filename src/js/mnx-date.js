@@ -34,7 +34,7 @@
           // date settings
           format = attrs.mnxFormat || dateFormats.shortDate,
           firstDay = attrs.mnxFirstday || 0,
-          order = dateFormats.shortDate.replace(/[^dmy]*([dmy])+[^dmy]*/gi, '$1').toLocaleLowerCase(),
+          order = format.replace(/[^dmy]*([dmy])+[^dmy]*/gi, '$1').toLocaleLowerCase(),
           dayNames = dateFormats.DAY.slice(firstDay, 7).concat(dateFormats.DAY.slice(0, firstDay)),
           // DOM elemnts
           container = angular.element('<div class="' + ns + '-container"></div>'),
@@ -56,22 +56,7 @@
             '</table>'
           ].join('')),
           calDays = angular.element('<tbody></tbody>');
-        
-        format.replace(/^([yMd]+)([^yMd]*)([yMd]+)([^yMd]*)([yMd]+)$/, function (m, p1, p2, p3, p4, p5) {
-          format = {
-            str: m,
-            yPos: /y+/.test(p1) ? 1 : (/y+/.test(p3) ? 2 : 3),
-            mPos: /M+/.test(p1) ? 1 : (/M+/.test(p3) ? 2 : 3),
-            dPos: /d+/.test(p1) ? 1 : (/d+/.test(p3) ? 2 : 3),
-            regx: new RegExp([
-              '(\\d{' + p1.length + '})', p2,
-              '(\\d{' + p3.length + '})', p4,
-              '(\\d{' + p5.length + '})'
-            ].join(''))
-          };
-          return;
-        });
-        
+
         function inputUpdate(event) {
           if (event) {
             event.stopPropagation();
@@ -86,14 +71,18 @@
             event.stopPropagation();
             event.preventDefault();
             refDate = new Date(angular.element(event.srcElement).attr('data-date'));
-            ctrl.$setViewValue($filter('date')(refDate, format.str));
+            ctrl.$setViewValue($filter('date')(refDate, format));
             ctrl.$render();
           }
         
         ctrl.$parsers.push(function (value) {
-          var d;
-          if (d = format.regx.exec(value)) {
-            ctrl.$modelValue = new Date(+d[format.yPos], +d[format.mPos]-1, +d[format.dPos]);
+          var d = value.match(/(\d+)/g);
+          if (d && d.length === 3) {
+            ctrl.$modelValue = new Date(
+              +d[order.indexOf('y')],
+              +d[order.indexOf('m')] - 1,
+              +d[order.indexOf('d')]
+            );
             refDate = new Date(ctrl.$modelValue);
             inputUpdate();
             return new Date(ctrl.$modelValue);
@@ -104,7 +93,7 @@
           if (angular.isDate(value)) {
             refDate = new Date(value);
             inputUpdate();
-            value = $filter('date')(value, format.str);
+            value = $filter('date')(value, format);
           }
           return value;
         });
