@@ -38,13 +38,30 @@ Add `mnx-date` attribute to an input element
  [mnx-max=""]>
 ```
 
-| Attribute                         | Type   | Description |
-| --------------------------------- | ------ | ----------- |
-| ng-model                          | Date   | Date object data binding. |
-| mnx-format<br><i>(Optional)</i>   | string | Formatting of the date. Example: `d.M.y`.<br>Defaults to the `shortDate` format from the `$locale` service. |
-| mnx-firstday<br><i>(Optional)</i> | number | Day the week starts on: `0 - sunday, 1 - monday, ...`.<br>Defaults to 0. |
-| mnx-min<br><i>(Optional)</i>      | Date   | Minimum date data binding. |
-| mnx-max<br><i>(Optional)</i>      | Date   | Maximum date data binding. |
+#### `mnx-format`
+*Optional*
+
+Sets the format of the date.
+Accepts a string value that represents the format. Example: `d.M.y`.
+Defaults to the `shortDate` format from the `$locale` service.
+
+#### `mnx-firstday`
+*Optional*
+
+Sets the first day of the week.
+Accepts a number value that represents the weekday: `0 - sunday, 1 - monday, ...`.
+
+#### `mnx-min`
+*Optional*
+
+Sets the minimum allowed date.
+Accepts a binding to a Date object.
+
+#### `mnx-max`
+*Optional*
+
+Sets the maximum allowed date.
+Accepts a binding to a Date object.
 
 ### License
 
