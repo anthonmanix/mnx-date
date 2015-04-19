@@ -31,6 +31,10 @@
       .mnx-date-btn-mode:hover,
       .mnx-date-btn-prev:hover,
       .mnx-date-btn-next:hover { background-color: #bbb; }
+      .mnx-date-btn-prev[disabled],
+      .mnx-date-btn-next[disabled] {
+        opacity: 0;
+        cursor: default; }
   .mnx-date-calendar {
     table-layout: fixed;
     min-width: 175px;
@@ -48,3 +52,4 @@
       .mnx-date-cal-day:hover { background-color: #bbb; }
       .mnx-date-cal-day-sel { background-color: #bbf !important; }
       .mnx-date-cal-day-alt { color: #777; }
+      .mnx-date-calendar td[disabled] { cursor: default; }

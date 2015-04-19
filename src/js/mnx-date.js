@@ -17,7 +17,7 @@
             '" class="', ns, '-cal-day', d.getMonth() != month ? '-alt' : (f === s ? '-sel' : ''),
             '">', d.getDate(), '</td>');
         } else {
-          m.push('<td></td>');
+          m.push('<td disabled></td>');
         }
         d.setDate(d.getDate() + 1);
       }
@@ -73,8 +73,14 @@
           }
           btnMode.text(dateFormats.MONTH[refDate.getMonth()] + ' ' + refDate.getFullYear());
           calDays.html(renderCalendar(refDate.getFullYear(), refDate.getMonth(), firstDay, ctrl.$modelValue, minDate, maxDate, $filter));
-          btnPrev.css({ opacity: minDate && refDate.getMonth() - 1 < minDate.getMonth() ? 0 : 1 });
-          btnNext.css({ opacity: maxDate && refDate.getMonth() + 1 > maxDate.getMonth() ? 0 : 1 });
+          btnPrev.removeAttr('disabled');
+          if (minDate && refDate.getMonth() - 1 < minDate.getMonth()) {
+            btnPrev.attr('disabled', true);
+          }
+          btnNext.removeAttr('disabled');
+          if (maxDate && refDate.getMonth() + 1 > maxDate.getMonth()) {
+            btnNext.attr('disabled', true);
+          }
         }
         
         function pickerUpdate(event) {
@@ -88,6 +94,14 @@
             }
           }
         
+        scope.$watch(attrs.mnxMin, function (value) {
+          minDate = new Date(value);
+          minDate.setHours(0, 0, 0, 0);
+        });
+        scope.$watch(attrs.mnxMax, function (value) {
+          maxDate = new Date(value);
+          maxDate.setHours(0, 0, 0, 0);
+        });
         ctrl.$parsers.push(function (value) {
           var d = value.match(/(\d+)/g);
           if (d && d.length === 3) {
@@ -134,10 +148,6 @@
           calDays.on('mousedown', pickerUpdate);
           refDate = (ctrl.$modelValue && new Date(ctrl.$modelValue)) || new Date();
           refDate.setHours(0, 0, 0, 0);
-          minDate = scope.$eval(attrs.mnxMin);
-          minDate.setHours(0, 0, 0, 0);
-          maxDate = scope.$eval(attrs.mnxMax);
-          maxDate.setHours(0, 0, 0, 0);
           inputUpdate();
           element.on('blur', function blur() {
             element.off('blur', blur);
