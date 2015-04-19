@@ -1,0 +1,50 @@
+.mnx-date-container,
+.mnx-date-container div {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+.mnx-date-container {
+  position: absolute;
+  font-size: 12px;
+  padding: 5px;
+  border: 1px solid #bbb;
+  background-color: #fff;
+  font-family: sans-serif; }
+  .mnx-date-head {
+    position: relative;
+    height: 22px;
+    line-height: 22px;
+    padding: 0 25px;
+    text-align: center;
+    font-weight: bold; }
+    .mnx-date-btn-mode { cursor: pointer; }
+    .mnx-date-btn-prev,
+    .mnx-date-btn-next {
+      position: absolute;
+      top: 0;
+      width: 25px;
+      height: 22px;
+      cursor: pointer; }
+    .mnx-date-btn-prev { left: 0; }
+    .mnx-date-btn-next { right: 0; }
+      .mnx-date-btn-mode:hover,
+      .mnx-date-btn-prev:hover,
+      .mnx-date-btn-next:hover { background-color: #bbb; }
+  .mnx-date-calendar {
+    table-layout: fixed;
+    min-width: 175px;
+    border-collapse: collapse; }
+    .mnx-date-calendar th,
+    .mnx-date-calendar td {
+      height: 22px;
+      line-height: 22px;
+      padding: 0 5px;
+      border: 0;
+      text-align: center;
+      text-transform: uppercase; }
+    .mnx-date-calendar th { cursor: default; }
+    .mnx-date-calendar td { cursor: pointer; }
+      .mnx-date-calendar td:hover { background-color: #bbb; }
+      .mnx-date-cal-day-sel { background-color: #bbf !important; }
+      .mnx-date-cal-day-alt { color: #777; }
