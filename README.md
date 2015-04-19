@@ -33,7 +33,7 @@ Add `mnx-date` attribute to an input element
  [mnx-max=""]>
 ```
 
-### Licence
+### License
 
 The MIT License (MIT)
 

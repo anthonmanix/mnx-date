@@ -98,13 +98,31 @@
             inputUpdate();
             return new Date(ctrl.$modelValue);
           }
-          return;
+          return value;
         });
         ctrl.$formatters.push(function (value) {
-          refDate = new Date(value);
-          inputUpdate();
-          return $filter('date')(value, format.str);
+          if (angular.isDate(value)) {
+            refDate = new Date(value);
+            inputUpdate();
+            value = $filter('date')(value, format.str);
+          }
+          return value;
         });
+        ctrl.$validators.date = function (modelValue) {
+          return angular.isDate(modelValue);
+        };
+        ctrl.$validators.min = function (modelValue) {
+          if (attrs.mnxMin) {
+            return scope.$eval(attrs.mnxMin) <= modelValue;
+          }
+          return true;
+        };
+        ctrl.$validators.max = function (modelValue) {
+          if (attrs.mnxMax) {
+            return scope.$eval(attrs.mnxMax) >= modelValue;
+          }
+          return true;
+        };
         
         container
           .append(head.append(btnMode).append(btnPrev).append(btnNext))
