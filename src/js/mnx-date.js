@@ -10,7 +10,7 @@
       m.push('<tr>');
       for (di = 0; di < 7; di += 1) {
         f = filter('date')(d, 'yyyy-MM-dd');
-        if (d >= min && d <= max) {
+        if ((!min || d >= min) && (!max || d <= max)) {
           m.push(
             '<td data-date="', f,
             '" title="', filter('date')(d, 'fullDate'),
@@ -95,12 +95,28 @@
           }
         
         scope.$watch(attrs.mnxMin, function (value) {
-          minDate = new Date(value);
-          minDate.setHours(0, 0, 0, 0);
+          if (value) {
+            minDate = new Date(value);
+            minDate.setHours(0, 0, 0, 0);
+            ctrl.$validators.min = function (modelValue) {
+              return !minDate || modelValue >= minDate;
+            };
+          } else {
+            minDate = null;
+            delete ctrl.$validators.min;
+          }
         });
         scope.$watch(attrs.mnxMax, function (value) {
-          maxDate = new Date(value);
-          maxDate.setHours(0, 0, 0, 0);
+          if (value) {
+            maxDate = new Date(value);
+            maxDate.setHours(0, 0, 0, 0);
+            ctrl.$validators.max = function (modelValue) {
+              return !maxDate || modelValue <= maxDate;
+            };
+          } else {
+            maxDate = null;
+            delete ctrl.$validators.max;
+          }
         });
         ctrl.$parsers.push(function (value) {
           var d = value.match(/(\d+)/g);
@@ -126,12 +142,6 @@
         });
         ctrl.$validators.date = function (modelValue) {
           return angular.isDate(modelValue);
-        };
-        ctrl.$validators.min = function (modelValue) {
-          return !minDate || modelValue >= minDate;
-        };
-        ctrl.$validators.max = function (modelValue) {
-          return !maxDate || modelValue <= maxDate;
         };
         
         container
