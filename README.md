@@ -2,6 +2,10 @@
 
 AngularJS date picker directive
 
+### Features
+
++ Angular i18n support
+
 ### Setup
 
 Include required libraries
@@ -32,6 +36,14 @@ Add `mnx-date` attribute to an input element
  [mnx-min=""]
  [mnx-max=""]>
 ```
+
+| Attribute                         | Type   | Description |
+| --------------------------------- | ------ | ----------- |
+| ng-model                          | Date   | Date object data binding. |
+| mnx-format<br><i>(Optional)</i>   | string | Formatting of the date. Example: `dd.MM.yyyy`. Defaults to the `shortDate` format from the `$locale` service. |
+| mnx-firstday<br><i>(Optional)</i> | number | Day the week starts on: `0 - sunday, 1 - monday, ...`. Defaults to 0 |
+| mnx-min<br><i>(Optional)</i>      | Date   | Minimum date data binding. |
+| mnx-max<br><i>(Optional)</i>      | Date   | Maximum date data binding. |
 
 ### License
 
