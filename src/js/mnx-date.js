@@ -1,7 +1,7 @@
 (function (angular) {
   'use strict';
   var ns = 'mnx-date';
-  
+
   function renderCalendar(year, month, fow, sel, min, max, filter) {
     var d = new Date(year, month, -fow), f, s, m = ['<tbody>'], wi, di;
     d = new Date(year, month, -d.getDay());
@@ -26,7 +26,7 @@
     m.push('</tbody>');
     return m.join('');
   }
-  
+
   function MnxDate($filter, $locale) {
     return {
       restrict: 'A',
@@ -62,9 +62,10 @@
           calDays = angular.element('<tbody></tbody>');
 
         function inputUpdate(event) {
-          var dir;
+          var dir, target;
           if (event) {
-            dir = +angular.element(event.srcElement).attr('data-dir');
+            target = event.target || event.srcElement;
+            dir = +angular.element(target).attr('data-dir');
             event.stopPropagation();
             event.preventDefault();
             if (minDate && refDate.getMonth() + dir < minDate.getMonth() ||
@@ -82,53 +83,67 @@
             btnNext.attr('disabled', true);
           }
         }
-        
+
         function pickerUpdate(event) {
-            var clickDate = angular.element(event.srcElement).attr('data-date');
-            event.stopPropagation();
+          var target = event.target || event.srcElement;
+          var clickDate = angular.element(target).attr('data-date');
+          event.stopPropagation();
+          event.preventDefault();
+          if (clickDate) {
+            refDate = new Date(clickDate);
+            ctrl.$setViewValue($filter('date')(refDate, format));
+            ctrl.$render();
+          }
+        }
+
+        function keypress(event) {
+          if (/[^\d\.\-\/]/g.test(String.fromCharCode(event.which || event.keyCode))) {
             event.preventDefault();
-            if (clickDate) {
-              refDate = new Date(clickDate);
-              ctrl.$setViewValue($filter('date')(refDate, format));
-              ctrl.$render();
+          }
+        }
+
+        if (attrs.mnxMin) {
+          scope.$watch(attrs.mnxMin, function (value) {
+            if (value) {
+              minDate = new Date(value);
+              minDate.setHours(0, 0, 0, 0);
+              ctrl.$validators.min = function (modelValue) {
+                return !minDate || modelValue >= minDate;
+              };
+            } else {
+              minDate = null;
+              delete ctrl.$validators.min;
             }
-          }
-        
-        scope.$watch(attrs.mnxMin, function (value) {
-          if (value) {
-            minDate = new Date(value);
-            minDate.setHours(0, 0, 0, 0);
-            ctrl.$validators.min = function (modelValue) {
-              return !minDate || modelValue >= minDate;
-            };
-          } else {
-            minDate = null;
-            delete ctrl.$validators.min;
-          }
-        });
-        scope.$watch(attrs.mnxMax, function (value) {
-          if (value) {
-            maxDate = new Date(value);
-            maxDate.setHours(0, 0, 0, 0);
-            ctrl.$validators.max = function (modelValue) {
-              return !maxDate || modelValue <= maxDate;
-            };
-          } else {
-            maxDate = null;
-            delete ctrl.$validators.max;
-          }
-        });
+          });
+        }
+        if (attrs.mnxMax) {
+          scope.$watch(attrs.mnxMax, function (value) {
+            if (value) {
+              maxDate = new Date(value);
+              maxDate.setHours(0, 0, 0, 0);
+              ctrl.$validators.max = function (modelValue) {
+                return !maxDate || modelValue <= maxDate;
+              };
+            } else {
+              maxDate = null;
+              delete ctrl.$validators.max;
+            }
+          });
+        }
+
         ctrl.$parsers.push(function (value) {
-          var d = value.match(/(\d+)/g);
-          if (d && d.length === 3) {
-            ctrl.$modelValue = new Date(
-              +d[order.indexOf('y')],
-              +d[order.indexOf('m')] - 1,
-              +d[order.indexOf('d')]
-            );
-            refDate = new Date(ctrl.$modelValue);
-            inputUpdate();
-            return new Date(ctrl.$modelValue);
+          var parts = value.match(/(\d+)/g), y, m, d, date;
+          if (parts && parts.length === 3) {
+            y = +parts[order.indexOf('y')];
+            m = +parts[order.indexOf('m')] - 1;
+            d = +parts[order.indexOf('d')];
+            date = new Date(y, m, d);
+            if (y === date.getFullYear() && m === date.getMonth() && d === date.getDate()) {
+              ctrl.$modelValue = date;
+              refDate = new Date(ctrl.$modelValue);
+              inputUpdate();
+              return new Date(ctrl.$modelValue);
+            }
           }
           return value;
         });
@@ -141,9 +156,14 @@
           return value;
         });
         ctrl.$validators.date = function (modelValue) {
-          return angular.isDate(modelValue);
+          if (modelValue) {
+            return angular.isDate(modelValue);
+          } else {
+            return true;
+          }
         };
-        
+
+        element.attr('placeholder', format);
         container
           .append(head.append(btnMode).append(btnPrev).append(btnNext))
           .append(cal.append(calDays));
@@ -156,18 +176,25 @@
           btnPrev.on('mousedown', inputUpdate);
           btnNext.on('mousedown', inputUpdate);
           calDays.on('mousedown', pickerUpdate);
+          element.on('keypress', keypress);
           refDate = (ctrl.$modelValue && new Date(ctrl.$modelValue)) || new Date();
           refDate.setHours(0, 0, 0, 0);
           inputUpdate();
           element.on('blur', function blur() {
+            if (ctrl.$modelValue && ctrl.$valid) {
+              ctrl.$setViewValue($filter('date')(refDate, format));
+              ctrl.$render();
+            }
+            element.off('keypress', keypress);
             element.off('blur', blur);
             container.remove();
           });
         });
+
       }
     };
   }
   MnxDate.$inject = ['$filter', '$locale'];
-  
+
   angular.module('mnxDate', []).directive('mnxDate', MnxDate);
 }(window.angular));
