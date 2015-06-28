@@ -2,29 +2,30 @@
   'use strict';
   var ns = 'mnx-date';
 
+  function renderWeekdays(dayNames) {
+    var w = '', i;
+    for (i = 0; i < 7; i += 1) { w += '<th title="' + dayNames[i] + '">' + dayNames[i][0] + '</th>'; }
+    return '<table class="' + ns + '-calendar"><thead><tr>' + w  + '</tr></thead></table>';
+  }
+
   function renderCalendar(year, month, fow, sel, min, max, filter) {
-    var d = new Date(year, month, -fow), f, s, m = ['<tbody>'], wi, di;
-    d = new Date(year, month, -d.getDay());
-    s = filter('date')(sel, 'yyyy-MM-dd');
-    for (wi = 0; wi < 6; wi += 1) {
-      m.push('<tr>');
-      for (di = 0; di < 7; di += 1) {
-        f = filter('date')(d, 'yyyy-MM-dd');
-        if ((!min || d >= min) && (!max || d <= max)) {
-          m.push(
-            '<td data-date="', f,
-            '" title="', filter('date')(d, 'fullDate'),
-            '" class="', ns, '-cal-day', d.getMonth() != month ? '-alt' : (f === s ? '-sel' : ''),
-            '">', d.getDate(), '</td>');
-        } else {
-          m.push('<td disabled></td>');
-        }
-        d.setDate(d.getDate() + 1);
+    var
+      d = new Date(year, month, -(new Date(year, month, -fow)).getDay()),
+      s = (new Date(sel)).setHours(0, 0, 0, 0), m = '', i;
+    for (i = 0; i < 42; i += 1) {
+      if (i && i % 7 === 0) { m += '</tr><tr>'; }
+      m += '<td title="' + filter('date')(d, 'fullDate') + '" class="';
+      if (d.getMonth() !== month) { m += ns + '-alt '; }
+      if (+d === s) { m += ns + '-sel'; }
+      if ((min && d < min) || (max && d > max)) {
+        m += '" disabled>';
+      } else {
+        m += '" data-date="' + (+d) + '">';
       }
-      m.push('</tr>');
+      m += d.getDate() + '</td>';
+      d.setDate(d.getDate() + 1);
     }
-    m.push('</tbody>');
-    return m.join('');
+    return '<tbody><tr>' + m + '</tr></tbody>';
   }
 
   function MnxDate($filter, $locale) {
@@ -46,60 +47,40 @@
           btnMode = angular.element('<div class="' + ns + '-btn-mode"></div>'),
           btnPrev = angular.element('<div class="' + ns + '-btn-prev" data-dir="-1">&lt;</div>'),
           btnNext = angular.element('<div class="' + ns + '-btn-next" data-dir="1">&gt;</div>'),
-          cal = angular.element([
-            '<table class="' + ns + '-calendar">',
-              '<thead><tr>',
-                '<th title="', dayNames[0], '">', dayNames[0][0], '</th>',
-                '<th title="', dayNames[1], '">', dayNames[1][0], '</th>',
-                '<th title="', dayNames[2], '">', dayNames[2][0], '</th>',
-                '<th title="', dayNames[3], '">', dayNames[3][0], '</th>',
-                '<th title="', dayNames[4], '">', dayNames[4][0], '</th>',
-                '<th title="', dayNames[5], '">', dayNames[5][0], '</th>',
-                '<th title="', dayNames[6], '">', dayNames[6][0], '</th>',
-              '</tr></thead>',
-            '</table>'
-          ].join('')),
+          cal = angular.element(renderWeekdays(dayNames)),
           calDays = angular.element('<tbody></tbody>');
 
         function inputUpdate(event) {
-          var dir, target;
+          var month = refDate.getMonth();
           if (event) {
-            target = event.target || event.srcElement;
-            dir = +angular.element(target).attr('data-dir');
             event.stopPropagation();
             event.preventDefault();
-            if (minDate && refDate.getMonth() + dir < minDate.getMonth() ||
-                maxDate && refDate.getMonth() + dir > maxDate.getMonth()) return;
-            refDate.setMonth(refDate.getMonth() + dir);
+            refDate.setMonth(month + (+angular.element(event.target || event.srcElement).attr('data-dir')));
+            month = refDate.getMonth();
           }
-          btnMode.text(dateFormats.MONTH[refDate.getMonth()] + ' ' + refDate.getFullYear());
-          calDays.html(renderCalendar(refDate.getFullYear(), refDate.getMonth(), firstDay, ctrl.$modelValue, minDate, maxDate, $filter));
-          btnPrev.removeAttr('disabled');
-          if (minDate && refDate.getMonth() - 1 < minDate.getMonth()) {
-            btnPrev.attr('disabled', true);
-          }
-          btnNext.removeAttr('disabled');
-          if (maxDate && refDate.getMonth() + 1 > maxDate.getMonth()) {
-            btnNext.attr('disabled', true);
-          }
+          btnMode.text(dateFormats.MONTH[month] + ' ' + refDate.getFullYear());
+          calDays.html(renderCalendar(refDate.getFullYear(), month, firstDay, ctrl.$modelValue, minDate, maxDate, $filter));
         }
 
         function pickerUpdate(event) {
-          var target = event.target || event.srcElement;
-          var clickDate = angular.element(target).attr('data-date');
+          var
+            target = event.target || event.srcElement,
+            clickDate = angular.element(target).attr('data-date');
           event.stopPropagation();
           event.preventDefault();
           if (clickDate) {
-            refDate = new Date(clickDate);
+            refDate = new Date(+clickDate);
             ctrl.$setViewValue($filter('date')(refDate, format));
             ctrl.$render();
           }
         }
 
         function keypress(event) {
-          if (/[^\d\.\-\/]/g.test(String.fromCharCode(event.which || event.keyCode))) {
-            event.preventDefault();
-          }
+          var charCode = angular.isNumber(event.which) ? event.which :
+                        (angular.isNumber(event.keyCode) ? event.keyCode : 0);
+          if (charCode < 28 || event.altKey || event.ctrlKey ||
+              /[\d\b\.\-\/]/.test(String.fromCharCode(charCode))) { return; }
+          event.preventDefault();
         }
 
         if (attrs.mnxMin) {
@@ -110,6 +91,7 @@
               ctrl.$validators.min = function (modelValue) {
                 return !minDate || modelValue >= minDate;
               };
+              ctrl.$validate();
             } else {
               minDate = null;
               delete ctrl.$validators.min;
@@ -124,6 +106,7 @@
               ctrl.$validators.max = function (modelValue) {
                 return !maxDate || modelValue <= maxDate;
               };
+              ctrl.$validate();
             } else {
               maxDate = null;
               delete ctrl.$validators.max;
@@ -182,7 +165,7 @@
           inputUpdate();
           element.on('blur', function blur() {
             if (ctrl.$modelValue && ctrl.$valid) {
-              ctrl.$setViewValue($filter('date')(refDate, format));
+              ctrl.$setViewValue($filter('date')(ctrl.$modelValue, format));
               ctrl.$render();
             }
             element.off('keypress', keypress);
@@ -190,7 +173,6 @@
             container.remove();
           });
         });
-
       }
     };
   }
